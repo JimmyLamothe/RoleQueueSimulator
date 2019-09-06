@@ -65,3 +65,15 @@ def role(player):
     else:
         print('Invalid role assignment, bug check')
         raise Exception
+
+def game_time():
+    return random.randint(7,18)
+
+def min_session_generator():
+    return random.randint(20, 60)
+
+def max_session_generator():
+    return random.randint(90, 360)
+
+def time_limit_generator():
+    return random.randint(5, 20)

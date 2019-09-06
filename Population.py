@@ -86,7 +86,3 @@ class Population():
                           gold_string, platinum_string, diamond_string,
                           master_string, GM_string, top_500_string,
                           average_SR_string, max_SR_string, min_SR_string])
-                              
-test_population = Population(100000)
-
-print(test_population)
