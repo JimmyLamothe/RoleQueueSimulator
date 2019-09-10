@@ -22,7 +22,9 @@ class Population():
 
     def __init__(self, size):
         for i in range(size):
-            self.player_list.append(Player())
+            player = Player()
+            player.ID = i
+            self.player_list.append(player)
         for player in self.player_list:
             if player.tank:
                 self.tank_list.append(player)

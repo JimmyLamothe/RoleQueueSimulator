@@ -1,3 +1,4 @@
+
 from utilities import roll, SR_generator, off_role_SR, time_limit_generator
 from utilities import min_session_generator, max_session_generator
 
@@ -115,4 +116,4 @@ class Player:
         return '\n'.join([player_string, role_string, tank_SR_string,
                          dps_SR_string, support_SR_string, min_session_time_string,
                           max_session_time_string, queue_time_limit_string,
-                          current_wait_time_string, match_role_string])
+                          current_wait_time_string, match_role_string, '\n'])

@@ -76,4 +76,4 @@ def max_session_generator():
     return random.randint(90, 360)
 
 def time_limit_generator():
-    return random.randint(5, 20)
+    return random.randint(5, 20)    
