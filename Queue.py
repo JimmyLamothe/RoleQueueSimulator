@@ -45,7 +45,7 @@ class Queue():
         average_wait_time = average([player.current_wait_time 
                                      for player in self.waiting_room])
         print('Average current wait time: ' + str(average_wait_time) + ' minutes')
-        input('Continue?')
+        #input('Continue?') #Activate to advance time manually
 
     def advance_queue(self):
         self.time += 1
@@ -117,26 +117,26 @@ class Queue():
             return dps_list[0:2] + tank_list[0:2] + support_list[0:2]
 
         def process_queue(index, SR_range): #TO DO: Establish stop condition
+            if index > len(candidates) - 6:
+                return -1
             selection = candidates[index]
             player_list = find_match(selection, SR_range)
             if player_list:
                 self.open_game(player_list)
                 selection = candidates[0]
                 self.successes += 1
-                process_queue(index, SR_range)
             else:
                 self.failures += 1
                 index += 1
-                try:
-                    process_queue(index, SR_range)                               
-                except Exception: #NOTE: Currently normal - shouldn't be!
-                    self.print_status()
-                    return
-        process_queue(0, self.SR_range)
-        print(str(self.successes))
-        print(str(self.failures))
+            return index
+        index = 0
+        while index != -1:
+            index = process_queue(index, self.SR_range)
+        self.print_status()
         self.successes = 0
         self.failures = 0
+
+
 
 
 
