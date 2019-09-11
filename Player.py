@@ -59,6 +59,21 @@ class Player:
         self.max_session_time = max_session_generator()
         self.queue_time_limit = time_limit_generator()
 
+    def leave_queue(self):
+        chance = 1
+        session_time = self.active_session_time
+        if session_time < self.min_session_time:
+            chance = self.min_stop_chance
+        elif session_time < self.max_session_time:
+            chance = self.med_stop_chance
+        else:
+            chance = self.max_stop_chance
+        if self.current_wait_time > self.queue_time_limit:
+            chance += self.chance_increase
+        if roll(chance):
+            return True
+        return False
+
     def generate_SR(self):
         base_SR = SR_generator()
         if self.tank:

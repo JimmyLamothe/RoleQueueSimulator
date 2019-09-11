@@ -6,6 +6,9 @@ def roll(chance):
         return True
     return False
 
+def average(lst):
+    return int(sum(lst) / len(lst))
+
 def SR_generator():
     base = 2200
     modifier = random.gauss(0, 700)

@@ -1,38 +1,60 @@
 from Game import Game
+from utilities import average
 
 class Queue():
     waiting_room = [] #contains multiple copies of players queuing for multiple roles
     active_games = []
+    next_game_ID = 0
     successes = 0
     failures = 0
     SR_range = 200 #Max range of SRs allowed to form a game
     time = 0
 
     def open_game(self, player_list):
-        game = Game(player_list)
+        game = Game(player_list, self.next_game_ID)
+        self.next_game_ID += 1
+        for player in player_list:
+            self.waiting_room.remove(player)
+            player.current_wait_time = 0
         self.active_games.append(game)
         print(game)
         
     def run_games(self):
-        for game in active_games:
+        for game in self.active_games:
             game.current_time += 1
             if game.current_time == game.end_time:
                 self.close_game(game)
 
-    def close_game(self):
-        self.active_games.pop(game)
+    def close_game(self, game):
+        self.active_games.remove(game)
+        for player in game.player_list:
+            if player.leave_queue():
+                pass
+            else:
+                print('Player ' + str(player.ID) + ' returned to queue')
+                self.waiting_room.append(player)
+        print('Game ' + str(game.ID) + ' ended after ' + str(game.current_time) + ' minutes.')
 
     def sort_waiting_room(self):
         self.waiting_room.sort(key=lambda player: player.current_wait_time, reverse=True)
 
+    def print_status(self):
+        print('Queue has been running for ' + str(self.time) + ' minutes')
+        print('Successfully placed ' + str(self.successes * 6) + ' players.')
+        print('Failed to place ' + str(len(self.waiting_room)) + ' players.')
+        average_wait_time = average([player.current_wait_time 
+                                     for player in self.waiting_room])
+        print('Average current wait time: ' + str(average_wait_time) + ' minutes')
+        input('Continue?')
+
     def advance_queue(self):
         self.time += 1
+        self.run_games()
+        for player in self.waiting_room:
+            player.current_wait_time += 1
         self.sort_waiting_room()
         candidates = self.waiting_room
-        # Following could be used to speed up search
-        # SR_waiting_room = sorted(self.waiting_room, key=lambda player: player.match_SR(),
-        #                          reverse=True)
-        selection = candidates[0] #Player we will try to find a match for
+        selection = candidates[0] #First player we will try to find a match for
 
         def tank_candidates():
             return [player for player in candidates if player.match_role == 'TANK']
@@ -53,51 +75,68 @@ class Queue():
                             if player.support_SR in SR_range]
             if len(dps_list) < 2 or len(tank_list) < 2 or len(support_list) < 2:
                 return False
+            if player.match_role == 'TANK':
+                try:
+                    dps_list.remove(player)
+                    print('Removed duplicate player from DPS list')
+                    input('Continue?')
+                except Exception:
+                    pass
+                try:
+                    support_list.remove(player)
+                    print('Removed duplicate player from Support list')
+                    input('Continue?')
+                except Exception:
+                    pass
+            if player.match_role == 'DPS':
+                try:
+                    tank_list.remove(player)
+                    print('Removed duplicate player from Tank list')
+                    input('Continue?')
+                except Exception:
+                    pass
+                try:
+                    support_list.remove(player)
+                    print('Removed duplicate player from Support list')
+                    input('Continue?')
+                except Exception:
+                    pass
+            if player.match_role == 'SUPPORT':
+                try:
+                    tank_list.remove(player)
+                    print('Removed duplicate player from Tank list')
+                    input('Continue?')
+                except Exception:
+                    pass
+                try:
+                    dps_list.remove(player)
+                    print('Removed duplicate player from DPS list')
+                    input('Continue?')
+                except Exception:
+                    pass
             return dps_list[0:2] + tank_list[0:2] + support_list[0:2]
 
-        def process_queue(selection, SR_range): #TO DO: Establish stop condition
-            print(str(len(candidates)))
-            print('First 10 current candidates:')
-            for player in candidates[0:10]:
-                print('Player ' + str(player.ID))
-            print('Current candidate:')
-            print('Player ' + str(player.ID))
+        def process_queue(index, SR_range): #TO DO: Establish stop condition
+            selection = candidates[index]
             player_list = find_match(selection, SR_range)
             if player_list:
                 self.open_game(player_list)
-                for player in player_list:
-                    try:
-                        print(player in candidates)
-                        print('Removing Player ' + str(player.ID))
-                        candidates.remove(player)
-                        print(player in candidates)
-                    except ValueError as e:
-                        print('Failed to remove ' + str(player.ID))
-                        print('Player info: ')
-                        print(player)
-                        print('Following players in player_list:')
-                        for player in player_list:
-                            print('Player ' + str(player.ID))
-                        print('First 10 players in candidates:')
-                        for player in candidates[0:10]:
-                            print('Player ' + str(player.ID))
-                        raise e
                 selection = candidates[0]
                 self.successes += 1
-                process_queue(selection, SR_range)
+                process_queue(index, SR_range)
             else:
-                candidates.remove(selection)
                 self.failures += 1
-                selection = candidates[0]
+                index += 1
                 try:
-                    process_queue(selection, SR_range)                               
-                except Exception:
-                    print('Player: \n' + str(selection))
+                    process_queue(index, SR_range)                               
+                except Exception: #NOTE: Currently normal - shouldn't be!
+                    self.print_status()
                     return
-        process_queue(selection, self.SR_range)
+        process_queue(0, self.SR_range)
         print(str(self.successes))
         print(str(self.failures))
-        
+        self.successes = 0
+        self.failures = 0
 
 
 
@@ -123,21 +162,3 @@ class Queue():
 """
 
 
-def test_queue():
-    from Population import Population
-    import random
-    test_population = Population(5000)
-    for player in test_population.player_list:
-        player.current_wait_time = random.randint(0,20)
-        role = random.randint(1,3)
-        if role == 1:
-            player.match_role = 'TANK'
-        elif role == 2:
-            player.match_role = 'DPS'
-        else:
-            player.match_role = 'SUPPORT'
-    test_queue = Queue()
-    test_queue.waiting_room = test_population.player_list
-    test_queue.advance_queue()
-
-test_queue()
