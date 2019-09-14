@@ -1,4 +1,3 @@
-
 from utilities import roll, SR_generator, off_role_SR, time_limit_generator
 from utilities import min_session_generator, max_session_generator
 
@@ -39,6 +38,8 @@ class Player:
     active_roles = []
     # Role currently matching for
     match_role = None
+    # Test - Checked by queue in latest process
+    tested = False
 
     def generate_role(self):
         #chance player will queue for each role

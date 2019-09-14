@@ -9,6 +9,9 @@ def roll(chance):
 def average(lst):
     return int(sum(lst) / len(lst))
 
+def mode(list):
+    return max(set(list), key = list.count)
+
 def SR_generator():
     base = 2200
     modifier = random.gauss(0, 700)

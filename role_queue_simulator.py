@@ -3,9 +3,9 @@ import Population, Queue
 def test_queue():
     from Population import Population
     import random
-    test_population = Population(5000)
+    test_population = Population(50000)
     for player in test_population.player_list:
-        player.current_wait_time = random.randint(0,20)
+        player.current_wait_time = random.randint(0,5)
         role = random.randint(1,3)
         if role == 1:
             player.match_role = 'TANK'
