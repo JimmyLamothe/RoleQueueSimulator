@@ -1,20 +1,19 @@
-import Population, Queue
+import sys
+import Population, Queue, config
+
+for arg in sys.argv:
+    if arg == 'skip_print':
+        config.skip_print = True
 
 def test_queue():
     from Population import Population
     import random
-    test_population = Population(50000)
+    test_population = Population(10000)
     for player in test_population.player_list:
-        player.current_wait_time = random.randint(0,5)
-        role = random.randint(1,3)
-        if role == 1:
-            player.match_role = 'TANK'
-        elif role == 2:
-            player.match_role = 'DPS'
-        else:
-            player.match_role = 'SUPPORT'
+        player.current_wait_time = 0
     test_queue = Queue.Queue()
     test_queue.waiting_room = test_population.player_list
+    test_queue.get_roles()
     while(test_queue.time < 300):
         print('Current time: ' + str(test_queue.time))
         #input('Continue?')

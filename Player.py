@@ -55,6 +55,31 @@ class Player:
         if not self.tank and not self.support and not self.dps:
             Player.generate_role(self)
 
+    def get_active_roles(self):
+        self.active_roles = []
+        if self.dps:
+            self.active_roles.append('DPS')
+        if self.tank:
+            self.active_roles.append('TANK')
+        if self.support:
+            self.active_roles.append('SUPPORT')
+
+    def get_rank(self):
+        if self.SR < 1500:
+            return 'BRONZE'
+        if self.SR < 2000:
+            return 'SILVER'
+        if self.SR < 2500:
+            return 'GOLD'
+        if self.SR < 3000:
+            return 'PLATINUM'
+        if self.SR < 3500:
+            return 'DIAMOND'
+        if self.SR < 4000:
+            return 'MASTER'
+        else:
+            return 'GM'
+
     def generate_queue_style(self):
         self.min_session_time = min_session_generator()
         self.max_session_time = max_session_generator()

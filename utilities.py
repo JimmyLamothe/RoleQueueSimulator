@@ -1,4 +1,4 @@
-import random, sys
+import random, sys, config
 
 def roll(chance):
     result = random.random()
@@ -9,8 +9,11 @@ def roll(chance):
 def average(lst):
     return int(sum(lst) / len(lst))
 
-def mode(list):
-    return max(set(list), key = list.count)
+def median(lst):
+    return lst[int(len(lst) / 2)]
+
+def mode(lst):
+    return max(set(lst), key = lst.count)
 
 def SR_generator():
     base = 2200
@@ -83,3 +86,9 @@ def max_session_generator():
 
 def time_limit_generator():
     return random.randint(5, 20)    
+
+def test_print(*args, **kwargs):
+    if config.skip_print:
+        pass
+    else:
+        print(*args, **kwargs)
