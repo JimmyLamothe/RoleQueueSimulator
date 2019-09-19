@@ -1,4 +1,8 @@
-import random, sys, config
+import random, sys, config, timeit
+
+def time_function(func, number = 1000):
+    print(timeit.timeit(func, number = number))
+    input('Continue?')
 
 def roll(chance):
     result = random.random()

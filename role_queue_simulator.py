@@ -1,14 +1,20 @@
 import sys
 import Population, Queue, config
 
+players = 10000
+
 for arg in sys.argv:
     if arg == 'skip_print':
         config.skip_print = True
+    try:
+        players = int(arg)
+    except Exception:
+        pass
 
 def test_queue():
     from Population import Population
     import random
-    test_population = Population(10000)
+    test_population = Population(players)
     for player in test_population.player_list:
         player.current_wait_time = 0
     test_queue = Queue.Queue()

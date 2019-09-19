@@ -1,5 +1,5 @@
 from Game import Game
-from utilities import average, median, mode, test_print
+from utilities import average, median, mode, test_print, time_function
 
 class Queue():
     waiting_room = []
@@ -37,7 +37,7 @@ class Queue():
         self.active_games.remove(game)
         testing = True
         for player in game.player_list:
-            if testing == True:
+            if testing == True: #Players entering and leaving queue not implemented
                 self.waiting_room.append(player)
                 continue
             if player.leave_queue():
@@ -125,26 +125,29 @@ class Queue():
         print('Max active game SR range: ' + str(max_SR_range) + ' SR')
         #input('Continue?') #Activate to advance time manually
 
-    def advance_queue(self):
+    def advance_queue(self): 
         self.time += 1
         self.run_games()
         for player in self.waiting_room:
             player.current_wait_time += 1
             player.tested = False
         self.sort_waiting_room()
-        candidates = self.waiting_room
-        selection = candidates[0] #First player we will try to find a match for
+        tank_candidates = [player for player in self.waiting_room
+                           if 'TANK' in player.active_roles]
+        dps_candidates = [player for player in self.waiting_room
+                          if 'DPS' in player.active_roles]
+        support_candidates = [player for player in self.waiting_room
+                              if 'SUPPORT' in player.active_roles]
 
-        def get_tank_candidates():
-            return [player for player in candidates if 'TANK' in player.active_roles]
+        def remove_from_candidates(player):
+            if 'TANK' in player.active_roles:
+                tank_candidates.remove(player)
+            if 'DPS' in player.active_roles:
+                dps_candidates.remove(player)
+            if 'SUPPORT' in player.active_roles:
+                support_candidates.remove(player)
 
-        def get_dps_candidates():
-            return [player for player in candidates if 'DPS' in player.active_roles]
-
-        def get_support_candidates():
-            return [player for player in candidates if 'SUPPORT' in player.active_roles]
-
-        def find_match(player):
+        def find_match(player): 
             player.get_active_roles()
             for role in player.active_roles:
                 player.match_role = role
@@ -152,15 +155,16 @@ class Queue():
                 test_print(player)
                 player_list = find_match_role(player)
                 if player_list:
+                    test_print(player_list)
+                    for player in player_list:
+                        remove_from_candidates(player)
                     return player_list
                 else:
+                    continue #Skip rest for speed, comment out to print info
                     test_print('Failed to find match for player ' + str(player.ID) + ' as a ' + role)
                     SR_range = self.get_SR_range(player)
                     min_SR = int(player.match_SR() - SR_range / 2)
                     max_SR = int(player.match_SR() + SR_range / 2)
-                    dps_candidates = get_dps_candidates()
-                    tank_candidates = get_tank_candidates()
-                    support_candidates = get_support_candidates()
                     valid_dps_candidates = [dps for dps in dps_candidates
                                             if dps.dps_SR > min_SR
                                             and dps.dps_SR < max_SR]
@@ -170,91 +174,114 @@ class Queue():
                     valid_support_candidates = [support for support in support_candidates
                                              if support.support_SR > min_SR
                                              and support.support_SR < max_SR]
-                    test_print('Total number of DPS in queue: ' + str(len(dps_candidates)))
-                    test_print('Number of DPS with valid SR: ' + str(len(valid_dps_candidates)))
-                    test_print('Total number of tanks in queue: ' + str(len(tank_candidates)))
-                    test_print('Number of tanks with valid SR: ' + str(len(valid_tank_candidates)))
-                    test_print('Total number of supports in queue: ' + str(len(support_candidates)))
-                    test_print('Number of supports with valid SR: ' + str(len(valid_support_candidates)))
+                    test_print('Total number of DPS in queue: ' +
+                               str(len(dps_candidates)))
+                    test_print('Number of DPS with valid SR: ' +
+                               str(len(valid_dps_candidates)))
+                    test_print('Total number of tanks in queue: ' +
+                               str(len(tank_candidates)))
+                    test_print('Number of tanks with valid SR: ' +
+                               str(len(valid_tank_candidates)))
+                    test_print('Total number of supports in queue: '
+                               + str(len(support_candidates)))
+                    test_print('Number of supports with valid SR: ' +
+                               str(len(valid_support_candidates)))
                     continue
             test_print('Failed to find match for player ' + str(player.ID) + ' in any role')
             test_print('Active roles : ' + str(player.active_roles))
             #input('Continue?')
             return False
 
-        def find_match_role(player): #TO DO - check for duplicate IDs
+        def find_match_role(player): #Key function to be improved for speed
             SR_range = self.get_SR_range(player)
             if SR_range > 500:
                 print(SR_range)
             SR_range = range(int(player.match_SR() - SR_range / 2),
                              int(player.match_SR() + SR_range / 2))
-            dps_list = []
-            if player.match_role == 'DPS':
-                dps_list.append(player)
-            dps_candidates = get_dps_candidates()
-            tank_candidates = get_tank_candidates()
-            support_candidates = get_support_candidates()
-            for candidate in dps_candidates:
-                #test_print(str(candidate.ID))
-                #test_print('DPS: ' + str(candidate.dps))
-                #test_print(str(candidate.dps_SR))
-                #input('Testing for SR match')
-                if candidate.dps_SR in SR_range and candidate != player:
-                    candidate.match_role = 'DPS'
-                    dps_list.append(candidate)
-                    if candidate in tank_candidates:
-                        tank_candidates.remove(candidate)
-                    if candidate in support_candidates:
-                        support_candidates.remove(candidate)
-                    #input('Match found!')
-                    if len(dps_list) == 4:
-                        break
+
+            player_list = []
+            player_list.append(player)
+
             tank_list = []
+            support_list = []
+            dps_list = []
+
             if player.match_role == 'TANK':
                 tank_list.append(player)
+            elif player.match_role == 'SUPPORT':
+                support_list.append(player)
+            elif player.match_role == 'DPS':
+                dps_list.append(player)
+            else:
+                print('Following player should have match role:')
+                print(player)
+                raise ValueError
+            def get_lists():
+                return '\n'.join(['Player List: ' + '\n'.join(str(player) for player in player_list),
+                                  'Tank List: ' + '\n'.join(str(player) for player in tank_list),
+                                  'Support List: ' + '\n'.join(str(player) for player in support_list),
+                                  'DPS List: ' + '\n'.join(str(player) for player in dps_list)])
+            test_print(get_lists())
+                               
             for candidate in tank_candidates:
                 #test_print(str(candidate.ID))
                 #test_print('Tank: ' + str(candidate.tank))
                 #test_print(candidate.tank_SR)
                 #input('Testing for SR match')
-                if candidate.tank_SR in SR_range and candidate != player:
+                if candidate.tank_SR in SR_range and candidate not in player_list:
                     candidate.match_role = 'TANK'
                     tank_list.append(candidate)
-                    if candidate in support_candidates:
-                        support_candidates.remove(candidate)
+                    player_list.append(candidate)
                     #input('Match found!')
                     if len(tank_list) == 4:
                         break
-            support_list = []
-            if player.match_role == 'SUPPORT':
-                support_list.append(player)
+
+            test_print(get_lists())
+
             for candidate in support_candidates:
                 #test_print(str(candidate.ID))
                 #test_print('Support: ' + str(candidate.support))
                 #test_print(candidate.support_SR)
                 #input('Testing for SR match')
-                if candidate.support_SR in SR_range and candidate != player:
+                if candidate.support_SR in SR_range and candidate not in player_list:
                     candidate.match_role = 'SUPPORT'
                     support_list.append(candidate)
+                    player_list.append(candidate)
                     #input('Match found!')
                     if len(support_list) == 4:
                         break
-            if len(dps_list) < 4 or len(tank_list) < 4 or len(support_list) < 4:
+
+            test_print(get_lists())
+
+            for candidate in dps_candidates:
+                #test_print(str(candidate.ID))
+                #test_print('DPS: ' + str(candidate.dps))
+                #test_print(str(candidate.dps_SR))
+                #input('Testing for SR match')
+                if candidate.dps_SR in SR_range and candidate not in player_list:
+                    candidate.match_role = 'DPS'
+                    dps_list.append(candidate)
+                    player_list.append(candidate)
+                    #input('Match found!')
+                    if len(dps_list) == 4:
+                        break
+
+            test_print(get_lists())
+
+            if len(player_list) < 12:
                 return False
-            player_list = dps_list + tank_list + support_list
             #test_print(player_list)
             #input('Continue?')
             return player_list
 
         def process_queue(index):
-            if index > len(candidates) - 12:
+            if index >= len(tank_candidates):
                 return -1
-            selection = candidates[index]
+            selection = tank_candidates[index]
             selection.tested = True
             player_list = find_match(selection)
             if player_list:
                 self.open_game(player_list)
-                selection = candidates[0]
                 self.successes += 1
             else:
                 self.failures += 1
